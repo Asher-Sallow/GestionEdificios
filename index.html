@@ -224,7 +224,7 @@
 
                         <div id="estadoBox" class="estado-box con-deuda">
                             <small class="text-uppercase fw-bold d-block" id="estadoLabel">Con deuda</small>
-                            <div class="monto-grande" id="estadoMonto">0 Bs.</div>
+                            <div class="monto-grande" id="estadoMonto">0.00 Bs.</div>
                             <small id="estadoSubtexto">Monto a pagar</small>
                         </div>
 
@@ -236,26 +236,26 @@
                         <h6 class="fw-bold mb-2 border-bottom pb-1 text-muted small text-uppercase">Desglose</h6>
                         <div class="list-group mb-3 shadow-sm">
                             <div class="list-group-item d-flex justify-content-between">
-                                <span>Alquiler</span><span class="fw-bold" id="valAlquiler">0 Bs.</span>
+                                <span>Alquiler</span><span class="fw-bold" id="valAlquiler">0.00 Bs.</span>
                             </div>
                             <div class="list-group-item d-flex justify-content-between">
-                                <span>Mantenimiento</span><span class="fw-bold" id="valMantenimiento">0 Bs.</span>
+                                <span>Mantenimiento</span><span class="fw-bold" id="valMantenimiento">0.00 Bs.</span>
                             </div>
                             <div class="list-group-item d-flex justify-content-between">
-                                <span>Limpieza</span><span class="fw-bold" id="valLimpieza">0 Bs.</span>
+                                <span>Limpieza</span><span class="fw-bold" id="valLimpieza">0.00 Bs.</span>
                             </div>
                             <div class="list-group-item d-flex justify-content-between">
-                                <span>Seguridad</span><span class="fw-bold" id="valSeguridad">0 Bs.</span>
+                                <span>Seguridad</span><span class="fw-bold" id="valSeguridad">0.00 Bs.</span>
                             </div>
                             <div class="list-group-item d-flex justify-content-between">
-                                <span>Agua</span><span class="fw-bold" id="valAgua">0 Bs.</span>
+                                <span>Agua</span><span class="fw-bold" id="valAgua">0.00 Bs.</span>
                             </div>
                             <div class="list-group-item d-flex justify-content-between">
-                                <span>Electricidad</span><span class="fw-bold" id="valElectricidad">0 Bs.</span>
+                                <span>Electricidad</span><span class="fw-bold" id="valElectricidad">0.00 Bs.</span>
                             </div>
                             <div class="list-group-item d-flex justify-content-between bg-light">
                                 <span class="fw-bold">TOTAL</span>
-                                <span class="fw-bold text-danger fs-5" id="valTotal">0 Bs.</span>
+                                <span class="fw-bold text-danger fs-5" id="valTotal">0.00 Bs.</span>
                             </div>
                         </div>
 
@@ -265,7 +265,7 @@
                             </label>
                             <div class="input-group">
                                 <input type="number" id="inputMontoRecibido" class="form-control form-control-lg fw-bold"
-                                       placeholder="0" min="0" step="0.01" oninput="calcularDiferenciaPreview()">
+                                       placeholder="0.00" min="0" step="0.01" oninput="calcularDiferenciaPreview()">
                                 <span class="input-group-text fw-bold">Bs.</span>
                             </div>
                             <small class="text-muted d-block mt-1">
@@ -277,7 +277,7 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <small class="fw-bold text-uppercase d-block" style="color:#78350f;">Diferencia / Saldo pendiente</small>
-                                    <span class="fs-5 fw-bold" id="valDiferencia" style="color:#78350f;">0 Bs.</span>
+                                    <span class="fs-5 fw-bold" id="valDiferencia" style="color:#78350f;">0.00 Bs.</span>
                                 </div>
                                 <i class="bi bi-calculator fs-2" style="color:#f57c00;"></i>
                             </div>
@@ -458,6 +458,11 @@ let currentVoucherB64  = '';
 let currentVoucherMime = '';
 let currentDeptoData   = null;
 
+// 🔧 Helper para formatear montos con 2 decimales
+function fmt(n) {
+    return (Number(n) || 0).toFixed(2);
+}
+
 function showLoad(m = 'Procesando...') {
     document.getElementById('loader-msg').textContent = m;
     document.getElementById('loader').classList.add('show');
@@ -552,17 +557,17 @@ function mostrarDetalles(idDepto) {
 
     document.getElementById('lblDepto').innerText     = idDepto;
     document.getElementById('lblInquilino').innerText = deptoData.inquilino;
-    document.getElementById('valTotal').innerText     = `${deptoData.total} Bs.`;
+    document.getElementById('valTotal').innerText     = `${fmt(deptoData.total)} Bs.`;
 
     document.getElementById('qrImagen').src = deptoData.qrUrl || '';
-    document.getElementById('inputMontoRecibido').value = deptoData.montoRecibido || 0;
+    document.getElementById('inputMontoRecibido').value = fmt(deptoData.montoRecibido);
 
-    document.getElementById('valAlquiler').innerText      = `${deptoData.alquiler} Bs.`;
-    document.getElementById('valMantenimiento').innerText = `${deptoData.mantenimiento} Bs.`;
-    document.getElementById('valLimpieza').innerText      = `${deptoData.limpieza} Bs.`;
-    document.getElementById('valSeguridad').innerText     = `${deptoData.seguridad} Bs.`;
-    document.getElementById('valAgua').innerText          = `${deptoData.agua} Bs.`;
-    document.getElementById('valElectricidad').innerText  = `${deptoData.electricidad} Bs.`;
+    document.getElementById('valAlquiler').innerText      = `${fmt(deptoData.alquiler)} Bs.`;
+    document.getElementById('valMantenimiento').innerText = `${fmt(deptoData.mantenimiento)} Bs.`;
+    document.getElementById('valLimpieza').innerText      = `${fmt(deptoData.limpieza)} Bs.`;
+    document.getElementById('valSeguridad').innerText     = `${fmt(deptoData.seguridad)} Bs.`;
+    document.getElementById('valAgua').innerText          = `${fmt(deptoData.agua)} Bs.`;
+    document.getElementById('valElectricidad').innerText  = `${fmt(deptoData.electricidad)} Bs.`;
 
     actualizarUIEstado(deptoData);
 
@@ -613,7 +618,7 @@ function actualizarUIEstado(deptoData) {
         badge.className += " bg-success";
         box.classList.add('al-dia');
         label.innerText = 'AL DÍA';
-        monto.innerText = '0 Bs.';
+        monto.innerText = '0.00 Bs.';
         sub.innerText   = '¡No debe nada este mes!';
         prevBox.style.background = '#dcfce7';
         prevBox.style.borderColor = '#2e7d32';
@@ -623,8 +628,8 @@ function actualizarUIEstado(deptoData) {
         badge.className += " bg-warning text-dark";
         box.classList.add('monto-pendiente');
         label.innerText = 'MONTO PENDIENTE';
-        monto.innerText = `${diferencia.toFixed(2)} Bs.`;
-        sub.innerText   = `Pagó ${recibido.toFixed(2)} de ${total.toFixed(2)} Bs.`;
+        monto.innerText = `${fmt(diferencia)} Bs.`;
+        sub.innerText   = `Pagó ${fmt(recibido)} de ${fmt(total)} Bs.`;
         prevBox.style.background = '#fef3c7';
         prevBox.style.borderColor = '#f57c00';
         valDif.style.color = '#78350f';
@@ -633,14 +638,14 @@ function actualizarUIEstado(deptoData) {
         badge.className += " bg-danger";
         box.classList.add('con-deuda');
         label.innerText = 'CON DEUDA';
-        monto.innerText = `${total.toFixed(2)} Bs.`;
+        monto.innerText = `${fmt(total)} Bs.`;
         sub.innerText   = 'Monto total a pagar';
         prevBox.style.background = '#fee2e2';
         prevBox.style.borderColor = '#c62828';
         valDif.style.color = '#7f1d1d';
     }
 
-    valDif.innerText = `${diferencia.toFixed(2)} Bs.`;
+    valDif.innerText = `${fmt(diferencia)} Bs.`;
 }
 
 function calcularDiferenciaPreview() {
@@ -649,7 +654,7 @@ function calcularDiferenciaPreview() {
     const recibido = Number(document.getElementById('inputMontoRecibido').value) || 0;
     const diferencia = Math.max(0, total - recibido);
 
-    document.getElementById('valDiferencia').innerText = `${diferencia.toFixed(2)} Bs.`;
+    document.getElementById('valDiferencia').innerText = `${fmt(diferencia)} Bs.`;
 
     const prevBox = document.getElementById('previewDiferencia');
     const valDif  = document.getElementById('valDiferencia');
@@ -673,7 +678,7 @@ function actualizarEstadoDepto() {
     const idDepto      = document.getElementById('lblDepto').innerText;
     const montoRecibido = Number(document.getElementById('inputMontoRecibido').value) || 0;
 
-    if (!confirm(`¿Actualizar estado del depto ${idDepto} con monto recibido: ${montoRecibido} Bs.?`)) return;
+    if (!confirm(`¿Actualizar estado del depto ${idDepto} con monto recibido: ${fmt(montoRecibido)} Bs.?`)) return;
 
     showLoad('Actualizando estado en Google Sheets...');
 
@@ -694,7 +699,7 @@ function actualizarEstadoDepto() {
             currentDeptoData.diferencia    = data.diferencia;
             currentDeptoData.estadoSheet   = data.estado;
             actualizarUIEstado(currentDeptoData);
-            alert(`✅ Estado actualizado a: "${data.estado}"\nDiferencia: ${data.diferencia} Bs.`);
+            alert(`✅ Estado actualizado a: "${data.estado}"\nDiferencia: ${fmt(data.diferencia)} Bs.`);
         } else {
             alert("❌ Error: " + data.error);
         }
