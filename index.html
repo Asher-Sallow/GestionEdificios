@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control - Edificio 10 Pisos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background-color: #f1f5f9; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+        .main-card { background: #ffffff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); padding: 24px; }
+        .piso-row { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid #f8fafc; }
+        .piso-label { width: 80px; font-weight: bold; color: #64748b; font-size: 0.9rem; }
+        .deptos-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%; }
+        .btn-depto { border: none; border-radius: 6px; padding: 10px 0; font-weight: bold; color: white;
+                     font-size: 0.9rem; text-align: center; transition: transform 0.1s ease; cursor: pointer; }
+        .btn-depto:hover { transform: scale(1.04); opacity: 0.9; }
+
+        .bg-al-dia          { background-color: #2e7d32 !important; }
+        .bg-con-deuda       { background-color: #c62828 !important; }
+        .bg-monto-pendiente { background-color: #f57c00 !important; }
+
+        .card-detalle { border: none; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+
+        #loader { display: none; position: fixed; inset: 0; z-index: 9999;
+                  background: rgba(10,22,40,0.7); backdrop-filter: blur(4px);
+                  align-items: center; justify-content: center; flex-direction: column; gap: 14px; }
+        #loader.show { display: flex; }
+        .spinner-gold { width: 42px; height: 42px; border: 4px solid rgba(255,255,255,0.25);
+                        border-top-color: #0d6efd; border-radius: 50%; animation: spin .7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .upload-zone { border: 2px dashed #ccc; border-radius: 12px; padding: 16px;
+                       text-align: center; cursor: pointer; transition: all .25s; background: #faf7f2; }
+        .upload-zone:hover { border-color: #0d6efd; background: rgba(13,110,253,0.05); }
+
+        .comp-preview-wrap { border: 2px solid #2e7d32; border-radius: 12px;
+                             overflow: hidden; text-align: center; background: #f0fdf4; }
+        .comp-preview-wrap img { max-height: 180px; width: auto; max-width: 100%; }
+
+        .voucher-recibido-wrap { border: 2px solid #2e7d32; border-radius: 12px;
+                                 overflow: hidden; text-align: center; background: #f0fdf4; }
+        .voucher-recibido-wrap iframe { width: 100%; height: 180px; border: none; border-radius: 8px; }
+
+        .banner-fecha {
+            background: linear-gradient(135deg, #0d6efd, #6610f2);
+            color: white; border-radius: 12px; padding: 12px 20px;
+            display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(13,110,253,0.3);
+        }
+        .banner-fecha i { font-size: 1.8rem; }
+        .banner-fecha .fecha-text { font-weight: bold; font-size: 1rem; }
+        .banner-fecha .fecha-sub { font-size: 0.85rem; opacity: 0.9; }
+
+        .qr-container {
+            background: white; border: 2px solid #e2e8f0; border-radius: 12px;
+            padding: 10px; text-align: center; margin-bottom: 15px;
+        }
+        .qr-container img { max-width: 160px; width: 100%; }
+        .qr-container small { display: block; color: #64748b; margin-top: 6px; font-weight: 600; }
+
+        .estado-box { padding: 14px; border-radius: 12px; margin-bottom: 15px; text-align: center; }
+        .estado-box.al-dia          { background: #dcfce7; border: 2px solid #2e7d32; color: #14532d; }
+        .estado-box.con-deuda       { background: #fee2e2; border: 2px solid #c62828; color: #7f1d1d; }
+        .estado-box.monto-pendiente { background: #fef3c7; border: 2px solid #f57c00; color: #78350f; }
+        .estado-box h4 { margin: 0; font-weight: bold; }
+        .estado-box .monto-grande { font-size: 1.8rem; font-weight: bold; margin: 6px 0; }
+
+        .qr-admin-box {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border: 2px dashed #0284c7;
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .qr-admin-box img {
+            max-width: 180px;
+            width: 100%;
+            border: 3px solid white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .qr-admin-box .qr-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+        .qr-placeholder {
+            color: #64748b;
+            padding: 20px;
+        }
+        .qr-placeholder i {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .vi-card { background: #ffffff; border-radius: 20px;
+                   box-shadow: 0 8px 40px rgba(0,0,0,0.10); padding: 28px; }
+        .vi-upload-zone { border: 2px dashed #ccc; border-radius: 12px; padding: 24px 16px;
+                          text-align: center; cursor: pointer; transition: all .25s; background: #faf7f2; }
+        .vi-upload-zone:hover { border-color: #0d6efd; background: rgba(13,110,253,0.05); }
+        .vi-preview-wrap { border: 2px solid #2e7d32; border-radius: 12px;
+                           overflow: hidden; text-align: center; background: #f0fdf4; }
+        .vi-preview-wrap img { max-height: 200px; width: auto; max-width: 100%; }
+    </style>
+</head>
+<body>
+
+<div id="loader">
+    <div class="spinner-gold"></div>
+    <span id="loader-msg" style="color:#fff; font-size:.9rem">Conectando con Google Sheets...</span>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     PANEL ADMINISTRADOR
+════════════════════════════════════════════════════════ -->
+<div id="panelAdmin" class="container py-4">
+
+    <div class="banner-fecha">
+        <i class="bi bi-calendar-event-fill"></i>
+        <div>
+            <div class="fecha-text">📅 Período de pago: del 15 al 25 de cada mes</div>
+            <div class="fecha-sub">Realiza tus pagos dentro de estas fechas para evitar recargos</div>
+        </div>
+    </div>
+
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-dark m-0">🏢 Monitoreo de Estado — Edificio 10 Pisos</h2>
+            <p class="text-muted m-0">Sincronización en tiempo real con Google Sheets y Drive.</p>
+        </div>
+        <button class="btn btn-primary fw-bold px-4 py-2 mt-3 mt-md-0 shadow-sm" onclick="sincronizarConSheets()">
+            <i class="bi bi-arrow-clockwise" id="iconSync"></i> Sincronizar Datos
+        </button>
+    </div>
+
+    <div id="errorBanner" class="alert alert-warning d-none fw-bold shadow-sm mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span id="errorMessage"></span>
+    </div>
+
+    <div class="row g-4 d-none" id="panelPrincipal">
+
+        <!-- IZQUIERDA: mapa del edificio -->
+        <div class="col-lg-7">
+            <div class="main-card">
+                <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                    <h5 class="m-0 fw-bold text-secondary"><i class="bi bi-building"></i> Vista de Departamentos</h5>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-success px-2 py-1">Al día</span>
+                        <span class="badge bg-danger px-2 py-1">Con deuda</span>
+                        <span class="badge bg-warning text-dark px-2 py-1">Pendiente</span>
+                    </div>
+                </div>
+
+                <!-- 📱 GESTIÓN DEL QR DE PAGO (PROTEGIDA POR CONTRASEÑA) -->
+                <div class="qr-admin-box mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="m-0 fw-bold text-primary">
+                            <i class="bi bi-qr-code me-1"></i> Código QR de Pago
+                            <i class="bi bi-shield-lock-fill ms-1 text-warning" title="Protegido por contraseña"></i>
+                        </h6>
+                        <small class="text-muted" id="qrStatusText">Cargando...</small>
+                    </div>
+
+                    <div id="qrPreviewActual" class="qr-placeholder">
+                        <i class="bi bi-qr-code"></i>
+                        <p class="mb-0 small">No hay QR configurado. Sube uno para mostrarlo a los inquilinos.</p>
+                    </div>
+
+                    <img id="qrImagenActual" src="" alt="QR actual" class="d-none">
+
+                    <div class="qr-actions">
+                        <button class="btn btn-sm btn-outline-primary" onclick="abrirModalPasswordQR()">
+                            <i class="bi bi-upload me-1"></i> <span id="qrBtnText">Subir QR</span>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="verQREnDrive()" id="btnVerQrDrive" style="display:none;">
+                            <i class="bi bi-box-arrow-up-right me-1"></i> Ver en Drive
+                        </button>
+                    </div>
+
+                    <input type="file" id="qrInput" accept="image/*" class="d-none" onchange="previewYSubirQR(this)">
+
+                    <div id="qrNuevoPreview" class="d-none mt-2">
+                        <img id="qrNuevoImg" style="max-height:150px; border-radius:8px; border:2px solid #0284c7;">
+                        <div class="small text-success mt-1">
+                            <i class="bi bi-check-circle me-1"></i>Listo para subir
+                        </div>
+                    </div>
+                </div>
+
+                <div id="contenedorPisos"></div>
+            </div>
+        </div>
+
+        <!-- DERECHA: detalle del departamento -->
+        <div class="col-lg-5">
+            <div class="card card-detalle h-100 bg-white">
+                <div class="card-header bg-dark text-white p-3">
+                    <h5 class="m-0 fw-bold"><i class="bi bi-search"></i> Estado de Cuenta</h5>
+                </div>
+                <div class="card-body p-4 d-flex flex-column" id="panelDetalle">
+
+                    <div class="text-center text-muted py-5" id="placeholderText">
+                        <i class="bi bi-info-circle display-4 d-block mb-3 text-secondary"></i>
+                        Selecciona un departamento para ver sus detalles.
+                    </div>
+
+                    <div id="datosContenedor" class="d-none w-100">
+
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3 class="fw-bold m-0 text-primary">Depto <span id="lblDepto">---</span></h3>
+                            <span id="badgeEstado" class="badge fs-6 px-3 py-2">---</span>
+                        </div>
+
+                        <div class="mb-3">
+                            <small class="text-muted fw-bold text-uppercase d-block">Inquilino / Propietario</small>
+                            <span class="fs-5 fw-semibold text-dark" id="lblInquilino">---</span>
+                        </div>
+
+                        <div id="estadoBox" class="estado-box con-deuda">
+                            <small class="text-uppercase fw-bold d-block" id="estadoLabel">Con deuda</small>
+                            <div class="monto-grande" id="estadoMonto">0 Bs.</div>
+                            <small id="estadoSubtexto">Monto a pagar</small>
+                        </div>
+
+                        <div class="qr-container">
+                            <img id="qrImagen" src="" alt="QR de pago">
+                            <small>📱 Escanea el QR para realizar tu pago</small>
+                        </div>
+
+                        <h6 class="fw-bold mb-2 border-bottom pb-1 text-muted small text-uppercase">Desglose</h6>
+                        <div class="list-group mb-3 shadow-sm">
+                            <div class="list-group-item d-flex justify-content-between">
+                                <span>Alquiler</span><span class="fw-bold" id="valAlquiler">0 Bs.</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between">
+                                <span>Mantenimiento</span><span class="fw-bold" id="valMantenimiento">0 Bs.</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between">
+                                <span>Limpieza</span><span class="fw-bold" id="valLimpieza">0 Bs.</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between">
+                                <span>Seguridad</span><span class="fw-bold" id="valSeguridad">0 Bs.</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between">
+                                <span>Agua</span><span class="fw-bold" id="valAgua">0 Bs.</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between">
+                                <span>Electricidad</span><span class="fw-bold" id="valElectricidad">0 Bs.</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between bg-light">
+                                <span class="fw-bold">TOTAL</span>
+                                <span class="fw-bold text-danger fs-5" id="valTotal">0 Bs.</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 p-3 bg-light rounded-3">
+                            <label class="fw-bold text-uppercase small text-muted d-block mb-2">
+                                <i class="bi bi-cash-coin me-1"></i> Monto Recibido (Columna N)
+                            </label>
+                            <div class="input-group">
+                                <input type="number" id="inputMontoRecibido" class="form-control form-control-lg fw-bold"
+                                       placeholder="0" min="0" step="0.01" oninput="calcularDiferenciaPreview()">
+                                <span class="input-group-text fw-bold">Bs.</span>
+                            </div>
+                            <small class="text-muted d-block mt-1">
+                                Ingresa el monto real del voucher y presiona "Actualizar estado"
+                            </small>
+                        </div>
+
+                        <div class="mb-3 p-3 rounded-3" id="previewDiferencia" style="background:#fef3c7; border:2px solid #f57c00;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <small class="fw-bold text-uppercase d-block" style="color:#78350f;">Diferencia / Saldo pendiente</small>
+                                    <span class="fs-5 fw-bold" id="valDiferencia" style="color:#78350f;">0 Bs.</span>
+                                </div>
+                                <i class="bi bi-calculator fs-2" style="color:#f57c00;"></i>
+                            </div>
+                        </div>
+
+                        <div id="voucherRecibidoSection" class="d-none mb-3">
+                            <small class="text-success fw-bold text-uppercase d-block mb-2">
+                                <i class="bi bi-check-circle-fill me-1"></i> Comprobante del inquilino
+                            </small>
+                            <div class="voucher-recibido-wrap p-2 mb-2">
+                                <iframe id="iframeVoucherRecibido" sandbox="allow-same-origin allow-scripts"></iframe>
+                            </div>
+                            <a id="linkVoucherDrive" href="#" target="_blank"
+                               class="btn btn-sm btn-outline-success w-100">
+                                <i class="bi bi-box-arrow-up-right me-1"></i> Ver en Drive (tamaño completo)
+                            </a>
+                        </div>
+
+                        <div class="mb-3" id="adminUploadSection">
+                            <small class="text-muted fw-bold text-uppercase d-block">
+                                Voucher / Comprobante (Columna M) - Subida manual
+                            </small>
+                            <div class="upload-zone mb-2" id="uploadZone"
+                                 onclick="document.getElementById('voucherInput').click()">
+                                <i class="bi bi-cloud-upload fs-2 text-primary"></i>
+                                <p class="mt-2 mb-0 fw-bold">Seleccionar imagen del voucher</p>
+                                <small class="text-muted">JPG o PNG (se comprime automáticamente)</small>
+                            </div>
+                            <input type="file" id="voucherInput" accept="image/*"
+                                   class="d-none" onchange="previewVoucher(this)">
+
+                            <div id="voucherPreview" class="d-none comp-preview-wrap p-2 mb-2">
+                                <img id="voucherImg" style="max-height:180px; width:auto; max-width:100%; border-radius:8px;">
+                                <div class="small text-success mt-1 pb-1">
+                                    <i class="bi bi-check-circle me-1"></i>Listo para guardar
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button id="btnActualizarEstado" class="btn btn-warning fw-bold btn-lg"
+                                    onclick="actualizarEstadoDepto()">
+                                <i class="bi bi-arrow-repeat me-2"></i> Actualizar Estado
+                            </button>
+                            <button id="btnNotificar" class="btn btn-danger fw-bold"
+                                    onclick="enviarMoraWhatsApp()">
+                                <i class="bi bi-whatsapp me-2"></i> Enviar Recordatorio por WhatsApp
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     VISTA INQUILINO
+════════════════════════════════════════════════════════ -->
+<div id="v-inquilino" class="d-none" style="min-height:100vh; background:#f1f5f9;">
+    <div class="container py-5 d-flex align-items-center justify-content-center" style="min-height:100vh;">
+        <div style="max-width:480px; width:100%;">
+
+            <div class="banner-fecha mb-4">
+                <i class="bi bi-calendar-event-fill"></i>
+                <div>
+                    <div class="fecha-text">📅 Período de pago: del 15 al 25</div>
+                    <div class="fecha-sub">Realiza tu pago dentro de estas fechas</div>
+                </div>
+            </div>
+
+            <div class="text-center mb-4">
+                <div style="font-size:3.5rem;">🏢</div>
+                <h3 class="fw-bold mt-2">Comprobante de Pago</h3>
+                <p class="text-muted">
+                    Departamento <strong id="vi-depto-label" class="text-primary fs-5">---</strong>
+                </p>
+            </div>
+
+            <div class="vi-card">
+                <div class="qr-container">
+                    <img id="vi-qr-imagen" src="" alt="QR de pago">
+                    <small>📱 Escanea el QR o sube tu comprobante</small>
+                </div>
+
+                <p class="text-muted small mb-3">
+                    <i class="bi bi-info-circle me-1 text-primary"></i>
+                    Sube una foto clara de tu comprobante (transferencia, depósito, etc.).
+                </p>
+
+                <div class="vi-upload-zone mb-2" id="vi-upload-zone"
+                     onclick="document.getElementById('vi-inp').click()">
+                    <i class="bi bi-cloud-upload fs-2 text-primary"></i>
+                    <p class="mt-2 mb-0 fw-bold">Seleccionar comprobante</p>
+                    <small class="text-muted">JPG o PNG — captura de pantalla o foto</small>
+                </div>
+                <input type="file" id="vi-inp" accept="image/*" class="d-none" onchange="previewVoucherInquilino(this)">
+
+                <div id="vi-preview" class="d-none vi-preview-wrap p-2 mb-3">
+                    <img id="vi-img" style="max-height:200px; width:auto; max-width:100%; border-radius:8px;">
+                    <div class="small text-success mt-1 pb-1">
+                        <i class="bi bi-check-circle me-1"></i>Imagen lista para enviar
+                    </div>
+                </div>
+
+                <div id="vi-error" class="alert alert-danger d-none small mb-2"></div>
+
+                <div id="vi-success" class="d-none text-center py-3">
+                    <div style="font-size:3rem;">✅</div>
+                    <h5 class="fw-bold mt-2 text-success">¡Comprobante enviado!</h5>
+                    <p class="text-muted small">
+                        El administrador lo revisará y actualizará tu estado de pago.
+                    </p>
+                </div>
+
+                <button id="vi-btn" class="btn btn-success w-100 fw-bold btn-lg"
+                        onclick="enviarVoucherInquilino()">
+                    <i class="bi bi-send me-2"></i>Enviar Comprobante
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     MODAL DE CONTRASEÑA PARA SUBIR/CAMBIAR QR
+════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalPasswordQR" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg border-0" style="border-radius:16px;">
+      <div class="modal-header bg-dark text-white" style="border-top-left-radius:16px; border-top-right-radius:16px;">
+        <h5 class="modal-title fw-bold">
+          <i class="bi bi-shield-lock-fill me-2"></i>Verificación de Seguridad
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body p-4">
+        <p class="text-muted mb-3">
+          Para <strong>subir o cambiar el Código QR de pago</strong> se requiere la contraseña de administrador.
+        </p>
+        <div class="mb-3">
+          <label class="form-label fw-bold small text-uppercase text-muted">
+            <i class="bi bi-key-fill me-1"></i> Contraseña
+          </label>
+          <div class="input-group">
+            <input type="password" id="inputPasswordQR" class="form-control form-control-lg"
+                   placeholder="Ingresa la contraseña" autocomplete="off"
+                   onkeydown="if(event.key==='Enter') validarPasswordQR()">
+            <button class="btn btn-outline-secondary" type="button" onclick="toggleVerPasswordQR()">
+              <i class="bi bi-eye" id="iconOjo"></i>
+            </button>
+          </div>
+          <div id="errorPasswordQR" class="text-danger small mt-2 d-none">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>Contraseña incorrecta
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary fw-bold" id="btnValidarPasswordQR"
+                onclick="validarPasswordQR()">
+          <i class="bi bi-unlock-fill me-1"></i> Verificar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw_pM7NBGGL3sUacUYwFxSKG-J1BAXNBVBWmCSOD7-OzWYOv4aeQp1cczxrQ23-5jw-/exec";
+
+let baseDatosEdificio = {};
+let currentVoucherB64  = '';
+let currentVoucherMime = '';
+let currentDeptoData   = null;
+
+function showLoad(m = 'Procesando...') {
+    document.getElementById('loader-msg').textContent = m;
+    document.getElementById('loader').classList.add('show');
+}
+function hideLoad() {
+    document.getElementById('loader').classList.remove('show');
+}
+
+function sincronizarConSheets() {
+    showLoad('Sincronizando con Google Sheets...');
+    const panel       = document.getElementById('panelPrincipal');
+    const errorBanner = document.getElementById('errorBanner');
+    const icon        = document.getElementById('iconSync');
+
+    panel.classList.add('d-none');
+    errorBanner.classList.add('d-none');
+    icon.className = "bi bi-arrow-clockwise spinner-border spinner-border-sm me-1";
+
+    fetch(SCRIPT_URL)
+        .then(r => r.json())
+        .then(datos => {
+            if (datos.error) throw new Error(datos.error);
+            baseDatosEdificio = datos;
+            renderizarEdificio();
+
+            const primerDepto = Object.values(datos)[0];
+            if (primerDepto && primerDepto.qrUrl) {
+                mostrarQRCargado(primerDepto.qrUrl);
+            } else {
+                document.getElementById('qrStatusText').innerText = '⚠️ Sin QR configurado';
+            }
+
+            panel.classList.remove('d-none');
+            icon.className = "bi bi-arrow-clockwise";
+            hideLoad();
+        })
+        .catch(err => {
+            console.error(err);
+            panel.classList.remove('d-none');
+            icon.className = "bi bi-arrow-clockwise";
+            errorBanner.classList.remove('d-none');
+            document.getElementById('errorMessage').innerText =
+                "No se pudo conectar. Verifica la URL de Apps Script y los permisos.";
+            hideLoad();
+        });
+}
+
+function renderizarEdificio() {
+    const contenedor = document.getElementById('contenedorPisos');
+    contenedor.innerHTML = "";
+
+    for (let p = 10; p >= 1; p--) {
+        let row = document.createElement('div');
+        row.className = 'piso-row';
+
+        let label = document.createElement('div');
+        label.className = 'piso-label';
+        label.innerText = `Piso ${p}`;
+        row.appendChild(label);
+
+        let grid = document.createElement('div');
+        grid.className = 'deptos-grid';
+
+        for (let d = 1; d <= 4; d++) {
+            let idDepto   = p === 10 ? `100${d}` : `${p}0${d}`;
+            let deptoData = baseDatosEdificio[String(idDepto)] || { estadoSheet: "Con deuda" };
+            let estado    = (deptoData.estadoSheet || "Con deuda").trim();
+
+            let claseColor = 'bg-con-deuda';
+            if (estado === 'Al día') claseColor = 'bg-al-dia';
+            else if (estado === 'Monto pendiente') claseColor = 'bg-monto-pendiente';
+
+            let btn = document.createElement('button');
+            btn.className = `btn-depto ${claseColor}`;
+            btn.innerHTML = idDepto;
+            btn.onclick   = () => mostrarDetalles(idDepto);
+            grid.appendChild(btn);
+        }
+
+        row.appendChild(grid);
+        contenedor.appendChild(row);
+    }
+}
+
+function mostrarDetalles(idDepto) {
+    let deptoData = baseDatosEdificio[String(idDepto)];
+    if (!deptoData) return;
+    currentDeptoData = deptoData;
+
+    document.getElementById('placeholderText').classList.add('d-none');
+    document.getElementById('datosContenedor').classList.remove('d-none');
+
+    document.getElementById('lblDepto').innerText     = idDepto;
+    document.getElementById('lblInquilino').innerText = deptoData.inquilino;
+    document.getElementById('valTotal').innerText     = `${deptoData.total} Bs.`;
+
+    document.getElementById('qrImagen').src = deptoData.qrUrl || '';
+    document.getElementById('inputMontoRecibido').value = deptoData.montoRecibido || 0;
+
+    document.getElementById('valAlquiler').innerText      = `${deptoData.alquiler} Bs.`;
+    document.getElementById('valMantenimiento').innerText = `${deptoData.mantenimiento} Bs.`;
+    document.getElementById('valLimpieza').innerText      = `${deptoData.limpieza} Bs.`;
+    document.getElementById('valSeguridad').innerText     = `${deptoData.seguridad} Bs.`;
+    document.getElementById('valAgua').innerText          = `${deptoData.agua} Bs.`;
+    document.getElementById('valElectricidad').innerText  = `${deptoData.electricidad} Bs.`;
+
+    actualizarUIEstado(deptoData);
+
+    const voucherSection = document.getElementById('voucherRecibidoSection');
+    let voucherExiste = false;
+
+    if (deptoData.urlVoucher && deptoData.urlVoucher.startsWith('http')) {
+        const fileId = deptoData.urlVoucher.match(/id=([^&]+)/)?.[1] ||
+                       deptoData.urlVoucher.match(/\/d\/([^/]+)/)?.[1];
+        if (fileId) {
+            document.getElementById('iframeVoucherRecibido').src = `https://drive.google.com/file/d/${fileId}/preview`;
+            document.getElementById('linkVoucherDrive').href = deptoData.urlVoucher;
+            voucherSection.classList.remove('d-none');
+            voucherExiste = true;
+        }
+    }
+    if (!voucherExiste) voucherSection.classList.add('d-none');
+
+    currentVoucherB64  = '';
+    currentVoucherMime = '';
+    document.getElementById('voucherPreview').classList.add('d-none');
+    document.getElementById('voucherInput').value = '';
+    document.getElementById('uploadZone').innerHTML =
+        '<i class="bi bi-cloud-upload fs-2 text-primary"></i>' +
+        '<p class="mt-2 mb-0 fw-bold">Seleccionar imagen del voucher</p>' +
+        '<small class="text-muted">JPG o PNG (se comprime automáticamente)</small>';
+}
+
+function actualizarUIEstado(deptoData) {
+    const estado   = (deptoData.estadoSheet || 'Con deuda').trim();
+    const total    = Number(deptoData.total) || 0;
+    const recibido = Number(deptoData.montoRecibido) || 0;
+    const diferencia = Number(deptoData.diferencia) || Math.max(0, total - recibido);
+
+    const badge   = document.getElementById('badgeEstado');
+    const box     = document.getElementById('estadoBox');
+    const label   = document.getElementById('estadoLabel');
+    const monto   = document.getElementById('estadoMonto');
+    const sub     = document.getElementById('estadoSubtexto');
+    const valDif  = document.getElementById('valDiferencia');
+    const prevBox = document.getElementById('previewDiferencia');
+
+    badge.className = 'badge fs-6 px-3 py-2';
+    box.className   = 'estado-box';
+
+    if (estado === 'Al día') {
+        badge.innerText = "✅ Al día";
+        badge.className += " bg-success";
+        box.classList.add('al-dia');
+        label.innerText = 'AL DÍA';
+        monto.innerText = '0 Bs.';
+        sub.innerText   = '¡No debe nada este mes!';
+        prevBox.style.background = '#dcfce7';
+        prevBox.style.borderColor = '#2e7d32';
+        valDif.style.color = '#14532d';
+    } else if (estado === 'Monto pendiente') {
+        badge.innerText = "⏳ Monto pendiente";
+        badge.className += " bg-warning text-dark";
+        box.classList.add('monto-pendiente');
+        label.innerText = 'MONTO PENDIENTE';
+        monto.innerText = `${diferencia.toFixed(2)} Bs.`;
+        sub.innerText   = `Pagó ${recibido.toFixed(2)} de ${total.toFixed(2)} Bs.`;
+        prevBox.style.background = '#fef3c7';
+        prevBox.style.borderColor = '#f57c00';
+        valDif.style.color = '#78350f';
+    } else {
+        badge.innerText = "❌ Con deuda";
+        badge.className += " bg-danger";
+        box.classList.add('con-deuda');
+        label.innerText = 'CON DEUDA';
+        monto.innerText = `${total.toFixed(2)} Bs.`;
+        sub.innerText   = 'Monto total a pagar';
+        prevBox.style.background = '#fee2e2';
+        prevBox.style.borderColor = '#c62828';
+        valDif.style.color = '#7f1d1d';
+    }
+
+    valDif.innerText = `${diferencia.toFixed(2)} Bs.`;
+}
+
+function calcularDiferenciaPreview() {
+    if (!currentDeptoData) return;
+    const total    = Number(currentDeptoData.total) || 0;
+    const recibido = Number(document.getElementById('inputMontoRecibido').value) || 0;
+    const diferencia = Math.max(0, total - recibido);
+
+    document.getElementById('valDiferencia').innerText = `${diferencia.toFixed(2)} Bs.`;
+
+    const prevBox = document.getElementById('previewDiferencia');
+    const valDif  = document.getElementById('valDiferencia');
+    if (recibido <= 0) {
+        prevBox.style.background = '#fee2e2';
+        prevBox.style.borderColor = '#c62828';
+        valDif.style.color = '#7f1d1d';
+    } else if (recibido >= total) {
+        prevBox.style.background = '#dcfce7';
+        prevBox.style.borderColor = '#2e7d32';
+        valDif.style.color = '#14532d';
+    } else {
+        prevBox.style.background = '#fef3c7';
+        prevBox.style.borderColor = '#f57c00';
+        valDif.style.color = '#78350f';
+    }
+}
+
+function actualizarEstadoDepto() {
+    if (!currentDeptoData) return;
+    const idDepto      = document.getElementById('lblDepto').innerText;
+    const montoRecibido = Number(document.getElementById('inputMontoRecibido').value) || 0;
+
+    if (!confirm(`¿Actualizar estado del depto ${idDepto} con monto recibido: ${montoRecibido} Bs.?`)) return;
+
+    showLoad('Actualizando estado en Google Sheets...');
+
+    fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+            action: 'actualizarEstado',
+            idDepto: idDepto,
+            montoRecibido: montoRecibido
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        hideLoad();
+        if (data.success) {
+            currentDeptoData.montoRecibido = data.montoRecibido;
+            currentDeptoData.diferencia    = data.diferencia;
+            currentDeptoData.estadoSheet   = data.estado;
+            actualizarUIEstado(currentDeptoData);
+            alert(`✅ Estado actualizado a: "${data.estado}"\nDiferencia: ${data.diferencia} Bs.`);
+        } else {
+            alert("❌ Error: " + data.error);
+        }
+    })
+    .catch(err => { hideLoad(); alert("❌ Error: " + err.message); });
+}
+
+function previewVoucher(input) {
+    if (!input.files[0]) return;
+    const file   = input.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const maxW   = 800;
+            const scale  = Math.min(maxW / img.width, 1);
+            canvas.width  = img.width  * scale;
+            canvas.height = img.height * scale;
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            currentVoucherB64  = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+            currentVoucherMime = 'image/jpeg';
+
+            document.getElementById('voucherImg').src = canvas.toDataURL('image/jpeg', 0.8);
+            document.getElementById('voucherPreview').classList.remove('d-none');
+            document.getElementById('uploadZone').innerHTML =
+                '<i class="bi bi-image fs-2 text-success"></i>' +
+                '<p class="mt-2 mb-0 fw-bold text-success">' + file.name + '</p>' +
+                '<small class="text-muted">Click para cambiar</small>';
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function enviarMoraWhatsApp() {
+    if (!currentDeptoData) return;
+    const idDepto       = document.getElementById('lblDepto').innerText;
+    const montoRecibido = Number(document.getElementById('inputMontoRecibido').value) || 0;
+    const total         = Number(currentDeptoData.total) || 0;
+    const diferencia    = Math.max(0, total - montoRecibido);
+    const btn           = document.getElementById('btnNotificar');
+
+    let estado = 'Con deuda';
+    if (montoRecibido <= 0) estado = 'Con deuda';
+    else if (montoRecibido >= total) estado = 'Al día';
+    else estado = 'Monto pendiente';
+
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Enviando...';
+    btn.disabled  = true;
+
+    fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+            action: 'enviarWhatsApp',
+            idDepto: idDepto,
+            inquilino: currentDeptoData.inquilino,
+            fono: currentDeptoData.fono,
+            total: total,
+            diferencia: diferencia,
+            estado: estado,
+            alquiler: currentDeptoData.alquiler,
+            mantenimiento: currentDeptoData.mantenimiento,
+            limpieza: currentDeptoData.limpieza,
+            seguridad: currentDeptoData.seguridad,
+            agua: currentDeptoData.agua,
+            electricidad: currentDeptoData.electricidad
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success)
+            alert(`✅ Mensaje enviado (Estado: ${estado}). El inquilino recibió el WhatsApp.`);
+        else
+            alert("❌ Error: " + data.error);
+    })
+    .catch(err => alert("❌ Error: " + err.message))
+    .finally(() => {
+        btn.innerHTML = '<i class="bi bi-whatsapp me-2"></i> Enviar Recordatorio por WhatsApp';
+        btn.disabled  = false;
+    });
+}
+
+let viB64 = '', viMime = '', viDepto = '';
+
+function previewVoucherInquilino(input) {
+    if (!input.files[0]) return;
+    const file   = input.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const maxW   = 900;
+            const scale  = Math.min(maxW / img.width, 1);
+            canvas.width  = Math.round(img.width  * scale);
+            canvas.height = Math.round(img.height * scale);
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            viB64  = canvas.toDataURL('image/jpeg', 0.88).split(',')[1];
+            viMime = 'image/jpeg';
+
+            document.getElementById('vi-img').src = canvas.toDataURL('image/jpeg', 0.88);
+            document.getElementById('vi-preview').classList.remove('d-none');
+            document.getElementById('vi-upload-zone').innerHTML =
+                '<i class="bi bi-image fs-2 text-success"></i>' +
+                '<p class="mt-2 mb-0 fw-bold text-success">' + file.name + '</p>' +
+                '<small class="text-muted">Click para cambiar</small>';
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+async function enviarVoucherInquilino() {
+    const errEl = document.getElementById('vi-error');
+    errEl.classList.add('d-none');
+
+    if (!viB64) {
+        errEl.textContent = '⚠️ Selecciona tu comprobante primero.';
+        errEl.classList.remove('d-none');
+        return;
+    }
+
+    const btn = document.getElementById('vi-btn');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Enviando...';
+    btn.disabled  = true;
+
+    try {
+        const res  = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+                action: 'recibirVoucher',
+                idDepto: viDepto,
+                voucherB64: viB64,
+                voucherMime: viMime
+            })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            document.getElementById('vi-success').classList.remove('d-none');
+            document.getElementById('vi-upload-zone').classList.add('d-none');
+            document.getElementById('vi-preview').classList.add('d-none');
+            btn.classList.add('d-none');
+        } else {
+            errEl.textContent = '❌ ' + (data.error || 'No se pudo enviar.');
+            errEl.classList.remove('d-none');
+            btn.innerHTML = '<i class="bi bi-send me-2"></i>Enviar Comprobante';
+            btn.disabled  = false;
+        }
+    } catch (e) {
+        errEl.textContent = '❌ Error de conexión: ' + e.message;
+        errEl.classList.remove('d-none');
+        btn.innerHTML = '<i class="bi bi-send me-2"></i>Enviar Comprobante';
+        btn.disabled  = false;
+    }
+}
+
+// ════════════════════════════════════════════
+// GESTIÓN DEL QR — Con protección por contraseña
+// ════════════════════════════════════════════
+let qrActualUrl        = '';
+let qrNuevoB64         = '';
+let qrNuevoMime        = '';
+let qrPasswordValidada = false; // Sesión temporal de validación
+
+// Abre el modal de contraseña
+function abrirModalPasswordQR() {
+    // Si ya fue validada en esta sesión, va directo
+    if (qrPasswordValidada) {
+        document.getElementById('qrInput').click();
+        return;
+    }
+    document.getElementById('inputPasswordQR').value = '';
+    document.getElementById('errorPasswordQR').classList.add('d-none');
+    const modal = new bootstrap.Modal(document.getElementById('modalPasswordQR'));
+    modal.show();
+    setTimeout(() => document.getElementById('inputPasswordQR').focus(), 400);
+}
+
+// Muestra/oculta la contraseña
+function toggleVerPasswordQR() {
+    const inp  = document.getElementById('inputPasswordQR');
+    const icon = document.getElementById('iconOjo');
+    if (inp.type === 'password') {
+        inp.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+    } else {
+        inp.type = 'password';
+        icon.className = 'bi bi-eye';
+    }
+}
+
+// Valida la contraseña contra el servidor
+function validarPasswordQR() {
+    const pwd   = document.getElementById('inputPasswordQR').value.trim();
+    const errEl = document.getElementById('errorPasswordQR');
+    const btn   = document.getElementById('btnValidarPasswordQR');
+
+    if (!pwd) {
+        errEl.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i>Ingresa la contraseña';
+        errEl.classList.remove('d-none');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Verificando...';
+    errEl.classList.add('d-none');
+
+    fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'validarPasswordQR', password: pwd })
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-unlock-fill me-1"></i> Verificar';
+
+        if (data.success) {
+            qrPasswordValidada = true;
+            // Cierra el modal y abre el selector de archivos
+            bootstrap.Modal.getInstance(document.getElementById('modalPasswordQR')).hide();
+            setTimeout(() => document.getElementById('qrInput').click(), 300);
+        } else {
+            errEl.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i>Contraseña incorrecta';
+            errEl.classList.remove('d-none');
+            document.getElementById('inputPasswordQR').select();
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-unlock-fill me-1"></i> Verificar';
+        errEl.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i>Error de conexión';
+        errEl.classList.remove('d-none');
+    });
+}
+
+function previewYSubirQR(input) {
+    // Doble verificación: si por alguna razón no está validada, pide de nuevo
+    if (!qrPasswordValidada) {
+        abrirModalPasswordQR();
+        input.value = '';
+        return;
+    }
+
+    if (!input.files[0]) return;
+    const file   = input.files[0];
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const maxW   = 800;
+            const scale  = Math.min(maxW / img.width, 1);
+            canvas.width  = img.width  * scale;
+            canvas.height = img.height * scale;
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            qrNuevoB64  = canvas.toDataURL('image/png', 0.92).split(',')[1];
+            qrNuevoMime = 'image/png';
+
+            document.getElementById('qrNuevoImg').src = canvas.toDataURL('image/png', 0.92);
+            document.getElementById('qrNuevoPreview').classList.remove('d-none');
+
+            if (confirm('¿Subir este QR a Google Drive y reemplazar el actual?')) {
+                subirQRAlServidor();
+            } else {
+                qrNuevoB64 = '';
+                qrNuevoMime = '';
+                document.getElementById('qrNuevoPreview').classList.add('d-none');
+                input.value = '';
+            }
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function subirQRAlServidor() {
+    // Tercera capa: envía la contraseña al servidor también
+    const pwd = document.getElementById('inputPasswordQR').value.trim();
+
+    showLoad('Subiendo QR a Google Drive...');
+
+    fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+            action: 'subirQR',
+            qrB64: qrNuevoB64,
+            qrMime: qrNuevoMime,
+            password: pwd // 🔐 Se envía la contraseña para validar en servidor
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        hideLoad();
+        if (data.success) {
+            mostrarQRCargado(data.qrUrl);
+            document.getElementById('qrNuevoPreview').classList.add('d-none');
+            document.getElementById('qrInput').value = '';
+            qrNuevoB64 = '';
+            qrNuevoMime = '';
+            alert('✅ QR actualizado correctamente. Todos los inquilinos lo verán ahora.');
+        } else if (data.error && data.error.toLowerCase().includes('contraseña')) {
+            // Si el servidor rechaza, invalida la sesión local
+            qrPasswordValidada = false;
+            alert('❌ ' + data.error);
+        } else {
+            alert('❌ Error al subir QR: ' + data.error);
+        }
+    })
+    .catch(err => {
+        hideLoad();
+        alert('❌ Error de conexión: ' + err.message);
+    });
+}
+
+function mostrarQRCargado(url) {
+    qrActualUrl = url;
+    document.getElementById('qrImagenActual').src = url;
+    document.getElementById('qrImagenActual').classList.remove('d-none');
+    document.getElementById('qrPreviewActual').classList.add('d-none');
+    document.getElementById('qrStatusText').innerText = '✅ QR activo';
+    document.getElementById('btnVerQrDrive').style.display = 'inline-block';
+    document.getElementById('qrBtnText').innerText = 'Cambiar QR';
+
+    document.getElementById('qrImagen').src = url;
+}
+
+function verQREnDrive() {
+    if (!qrActualUrl) return;
+    const match = qrActualUrl.match(/id=([^&]+)/);
+    if (match) {
+        const fileId = match[1];
+        window.open(`https://drive.google.com/file/d/${fileId}/view`, '_blank');
+    }
+}
+
+window.onload = function () {
+    const params = new URLSearchParams(window.location.search);
+    const depto  = params.get('depto');
+
+    if (depto && depto.trim() !== '') {
+        viDepto = depto.trim();
+        document.getElementById('vi-depto-label').innerText = viDepto;
+        document.getElementById('panelAdmin').classList.add('d-none');
+        document.getElementById('v-inquilino').classList.remove('d-none');
+
+        fetch(SCRIPT_URL).then(r => r.json()).then(datos => {
+            if (datos[viDepto] && datos[viDepto].qrUrl) {
+                document.getElementById('vi-qr-imagen').src = datos[viDepto].qrUrl;
+            }
+        }).catch(() => {});
+    } else {
+        sincronizarConSheets();
+    }
+};
+</script>
+</body>
+</html>
